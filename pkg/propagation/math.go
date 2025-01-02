@@ -6,6 +6,14 @@ type Vec3 struct {
 	X, Y, Z float64
 }
 
+func (v Vec3) Add(vec Vec3) Vec3 {
+	return Vec3{v.X + vec.X, v.Y + vec.Y, v.Z + vec.Z}
+}
+
+func (v Vec3) Sub(vec Vec3) Vec3 {
+	return Vec3{v.X - vec.X, v.Y - vec.Y, v.Z - vec.Z}
+}
+
 func Normalize(v Vec3) Vec3 {
 	mag := Magnitude(v)
 	return Vec3{X: v.X / mag, Y: v.Y / mag, Z: v.Z / mag}
