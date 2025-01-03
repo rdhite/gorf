@@ -6,6 +6,8 @@ import (
 	"log"
 	"math"
 	"os"
+
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 func foo1() {
@@ -35,6 +37,22 @@ func foo1() {
 	}
 }
 
+func foo2() {
+	testLoc := mgl64.Vec3{1, 0, 0}
+
+	sigLoc := mgl64.Vec3{0, 0, 0}
+	sigDir := mgl64.Vec3{1, 0, 0}
+	sig := propagation.Signal{
+		Pattern:   propagation.SincPattern{Factor: 1},
+		Watts:     100,
+		Frequency: 2_800_000_000,
+		Direction: sigDir,
+		Location:  sigLoc,
+	}
+
+	fmt.Printf("--- %v ---\n", propagation.PowerAtPosition(sig, testLoc))
+}
+
 func main() {
-	foo1()
+	foo2()
 }

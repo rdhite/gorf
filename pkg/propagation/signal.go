@@ -1,6 +1,10 @@
 package propagation
 
-import "math"
+import (
+	"math"
+
+	"github.com/go-gl/mathgl/mgl64"
+)
 
 var c float64 = 299_792_458
 
@@ -8,8 +12,8 @@ type Signal struct {
 	Pattern   Pattern
 	Watts     float64
 	Frequency float64
-	Direction Vec3
-	Location  Vec3
+	Direction mgl64.Vec3
+	Location  mgl64.Vec3
 }
 
 // Provides the decibel difference of `p1` compared to `p2` - i.e.
@@ -18,27 +22,27 @@ func RelativeDecibels(p1, p2 float64) float64 {
 	return 10 * math.Log10(p1/p2)
 }
 
-func PowerAtPosition(sig Signal, location Vec3) (dBm float64) {
-	mat := rotateToX(sig.Direction)
+// Calculates power density (mW/m^2)
+func PowerAtPosition(sig Signal, location mgl64.Vec3) float64 {
+	quat := rotateToX(sig.Direction)
 	diff := location.Sub(sig.Location)
-	dist := Magnitude(diff)
+	dBi := sig.Pattern.CalcGainVec(quat.Rotate(diff))
 
-	dBi := sig.Pattern.CalcGainVec(matmul(mat, diff))
-	fspl := math.Pow(4*math.Pi*dist/freqToWavelength(sig.Frequency), 2)
-	receiverPower := sig.Watts * Decibel2Linear(dBi) / fspl
+	distDb := Linear2Decibel(diff.Len())
+	fourPiDb := Linear2Decibel(4 * math.Pi)
+	wavelengthDb := Linear2Decibel(freqToWavelength(sig.Frequency))
+	transmitDb := Linear2Decibel(sig.Watts * 1000) // convert to milliwatts for dBm
 
-	return Linear2Decibel(receiverPower)
+	// Using equation for P_r from https://en.wikipedia.org/wiki/Free-space_path_loss
+	// Assuming D_r is just 0 gain
+	dBm := transmitDb + dBi /* + 0 + */ + 2*(wavelengthDb-fourPiDb-distDb)
+
+	return Decibel2Linear(dBm)
 }
 
 // Returns the rotation matrix that transforms `vec` to {1, 0, 0}
-func rotateToX(vec Vec3) (mat [3]Vec3) {
-	// TODO: implement
-	return
-}
-
-func matmul(mat [3]Vec3, vec Vec3) Vec3 {
-	// TODO: implement
-	return Vec3{}
+func rotateToX(vec mgl64.Vec3) mgl64.Quat {
+	return mgl64.QuatBetweenVectors(vec, mgl64.Vec3{1, 0, 0})
 }
 
 func freqToWavelength(freq float64) float64 {

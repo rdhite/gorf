@@ -1,8 +1,11 @@
 package propagation
 
 import (
+	"cmp"
 	"math"
 	"slices"
+
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 // Built from one azimuth and one elevation gain pattern. It is assumed that the
@@ -35,19 +38,27 @@ func CreateNaiveTabledPattern(azimuths, elevations []AngleGain) (pattern NaiveTa
 	}
 
 	slices.SortFunc(pattern.elevations, func(a, b AngleGain) int {
-		return int(a.Angle - b.Angle)
+		return cmp.Compare(a.Angle, b.Angle)
 	})
 
 	return
 }
 
-func (pattern NaiveTabledPattern) CalcGain(azimuth, elevation float64) float64 {
+func (pattern NaiveTabledPattern) CalcGainAE(azimuth, elevation float64) float64 {
 	var azGain, elGain float64
 
 	azGain = interpolateGain(pattern.azimuths, azimuth)
 	elGain = interpolateGain(pattern.elevations, elevation)
 
 	return azGain + elGain
+}
+
+func (pattern NaiveTabledPattern) CalcGainVec(direction mgl64.Vec3) float64 {
+	// TODO: Use atan2 or something other than AngleBetween since we need to cover
+	// the entire range of -pi to pi, not just 0 to pi
+	azimuth := AngleBetween(mgl64.Vec3{1, 0, 0}, mgl64.Vec3{direction[0], direction[1], 0.0})
+	elevation := AngleBetween(mgl64.Vec3{1, 0, 0}, mgl64.Vec3{direction[0], 0.0, direction[2]})
+	return pattern.CalcGainAE(azimuth, elevation)
 }
 
 // Finds the gain for `angle` by interpolating within `gains`.
