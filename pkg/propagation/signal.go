@@ -22,13 +22,12 @@ func PowerAtPosition(sig Signal, location Vec3) (dBm float64) {
 	mat := rotateToX(sig.Direction)
 	diff := location.Sub(sig.Location)
 	dist := Magnitude(diff)
+
 	dBi := sig.Pattern.CalcGainVec(matmul(mat, diff))
-
 	fspl := math.Pow(4*math.Pi*dist/freqToWavelength(sig.Frequency), 2)
+	receiverPower := sig.Watts * Decibel2Linear(dBi) / fspl
 
-	foo := sig.Watts * 1 /* turn dBi into linear */ / fspl
-
-	return foo /*after making it logarithmic again*/
+	return Linear2Decibel(receiverPower)
 }
 
 // Returns the rotation matrix that transforms `vec` to {1, 0, 0}

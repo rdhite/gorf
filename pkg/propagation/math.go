@@ -31,6 +31,14 @@ func AngleBetween(v1, v2 Vec3) float64 {
 	return math.Acos(Dot(v1, v2) / (Magnitude(v1) * Magnitude(v2)))
 }
 
+func Decibel2Linear(dB float64) float64 {
+	return math.Pow(10, dB/10)
+}
+
+func Linear2Decibel(lin float64) float64 {
+	return 10 * math.Log10(lin)
+}
+
 // Calculate the angle between "forward" and the resulting look
 // angle that `azimuth` and `elevation` produce.
 func calc_compound(azimuth, elevation float64) float64 {
