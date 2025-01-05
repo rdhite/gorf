@@ -26,9 +26,7 @@ func (pattern SincPattern) CalcGainAE(azimuth, elevation float64) float64 {
 }
 
 func (pattern SincPattern) CalcGainVec(direction mgl64.Vec3) float64 {
-	// TODO: Use atan2 or something other than AngleBetween since we need to cover
-	// the entire range of -pi to pi, not just 0 to pi
-	theta := AngleBetween(mgl64.Vec3{1, 0, 0}, direction)
+	theta := angleBetween(mgl64.Vec3{1, 0, 0}, direction)
 	if theta == 0 {
 		theta = math.SmallestNonzeroFloat64
 	}
@@ -43,4 +41,8 @@ func sinc(theta float64) float64 {
 // angle that `azimuth` and `elevation` produce.
 func calc_compound(azimuth, elevation float64) float64 {
 	return math.Acos(math.Cos(azimuth) * math.Cos(elevation))
+}
+
+func angleBetween(v1, v2 mgl64.Vec3) float64 {
+	return math.Acos(v1.Dot(v2) / (v1.Len() * v2.Len()))
 }

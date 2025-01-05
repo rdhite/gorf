@@ -16,17 +16,11 @@ type Signal struct {
 	Location  mgl64.Vec3
 }
 
-// Provides the decibel difference of `p1` compared to `p2` - i.e.
-// if p1 > p2, then the result is positive.
-func RelativeDecibels(p1, p2 float64) float64 {
-	return 10 * math.Log10(p1/p2)
-}
-
 // Calculates power density (mW/m^2)
 func PowerAtPosition(sig Signal, location mgl64.Vec3) float64 {
-	quat := rotateToX(sig.Direction)
+	rotateToXQuat := mgl64.QuatBetweenVectors(sig.Direction, mgl64.Vec3{1, 0, 0})
 	diff := location.Sub(sig.Location)
-	dBi := sig.Pattern.CalcGainVec(quat.Rotate(diff))
+	dBi := sig.Pattern.CalcGainVec(rotateToXQuat.Rotate(diff))
 
 	distDb := Linear2Decibel(diff.Len())
 	fourPiDb := Linear2Decibel(4 * math.Pi)
@@ -38,11 +32,6 @@ func PowerAtPosition(sig Signal, location mgl64.Vec3) float64 {
 	dBm := transmitDb + dBi /* + 0 + */ + 2*(wavelengthDb-fourPiDb-distDb)
 
 	return Decibel2Linear(dBm)
-}
-
-// Returns the rotation matrix that transforms `vec` to {1, 0, 0}
-func rotateToX(vec mgl64.Vec3) mgl64.Quat {
-	return mgl64.QuatBetweenVectors(vec, mgl64.Vec3{1, 0, 0})
 }
 
 func freqToWavelength(freq float64) float64 {

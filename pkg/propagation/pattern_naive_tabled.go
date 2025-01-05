@@ -54,17 +54,32 @@ func (pattern NaiveTabledPattern) CalcGainAE(azimuth, elevation float64) float64
 }
 
 func (pattern NaiveTabledPattern) CalcGainVec(direction mgl64.Vec3) float64 {
-	// TODO: Use atan2 or something other than AngleBetween since we need to cover
-	// the entire range of -pi to pi, not just 0 to pi
-	azimuth := AngleBetween(mgl64.Vec3{1, 0, 0}, mgl64.Vec3{direction[0], direction[1], 0.0})
-	elevation := AngleBetween(mgl64.Vec3{1, 0, 0}, mgl64.Vec3{direction[0], 0.0, direction[2]})
+	// azimuth will be the angle from x-axis to the x,y subcomponent of `direction`
+	azimuth := math.Atan2(direction[0], direction[1])
+
+	// elevation is angle from x,y plane to `direction`
+	// arctan the "base" of the direction triangle (the x,y subcomponent) and the "height" (z subcomponent)
+	elevation := math.Atan2(mgl64.Vec2{direction[0], direction[1]}.Len(), direction[2])
+
 	return pattern.CalcGainAE(azimuth, elevation)
 }
 
 // Finds the gain for `angle` by interpolating within `gains`.
+//
+// Assumes that gains angles are sorted, non repeating, and in the range [0, 2*pi)
 func interpolateGain(gains []AngleGain, angle float64) float64 {
 	if len(gains) == 1 {
 		return gains[0].Gain
+	}
+
+	// TODO: de-loop via modulo operator
+	for angle < 0 {
+		angle += 2 * math.Pi
+	}
+
+	// TODO: de-loop via modulo operator
+	for angle >= 2*math.Pi {
+		angle -= 2 * math.Pi
 	}
 
 	for i := 0; i < len(gains)-1; i++ {
